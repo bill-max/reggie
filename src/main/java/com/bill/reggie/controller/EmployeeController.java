@@ -1,21 +1,24 @@
 package com.bill.reggie.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.bill.reggie.common.R;
 import com.bill.reggie.entity.Employee;
 import com.bill.reggie.service.EmployeeService;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.DigestUtils;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
 
+
 @RestController
 @RequestMapping("/employee")
+@Slf4j
 public class EmployeeController {
 
     @Autowired
@@ -23,6 +26,7 @@ public class EmployeeController {
 
     /**
      * 员工登录
+     *
      * @param request  请求
      * @param employee 前端传回实体类
      * @return
@@ -56,6 +60,7 @@ public class EmployeeController {
 
     /**
      * 退出
+     *
      * @param request 删除session
      * @return 成功
      */
@@ -69,11 +74,12 @@ public class EmployeeController {
 
     /**
      * 新增员工
+     *
      * @param employee 员工
      * @return 添加成功
      */
     @PostMapping
-    public R<String> save(HttpServletRequest request,@RequestBody Employee employee) {
+    public R<String> save(HttpServletRequest request, @RequestBody Employee employee) {
         //设置默认密码
         employee.setPassword(DigestUtils.md5DigestAsHex("123456".getBytes()));
         //设置默认属性
@@ -88,6 +94,55 @@ public class EmployeeController {
         employeeService.save(employee);
 
         return R.success("success");
+    }
+
+    /**
+     * 员工信息分页查询
+     *
+     * @param page
+     * @param pageSize
+     * @param name
+     * @return
+     */
+    @GetMapping("/page")
+    public R<Page<Employee>> page(int page, int pageSize, String name) {
+        log.info("page={},pageSize={},name={}", page, pageSize, name);
+        Page<Employee> pageInfo = new Page<Employee>(page, pageSize);
+        //条件构造器
+        LambdaQueryWrapper<Employee> lambdaQueryWrapper = new LambdaQueryWrapper<Employee>();
+        lambdaQueryWrapper.like(StringUtils.isNotEmpty(name), Employee::getName, name);
+        //排序
+        lambdaQueryWrapper.orderByDesc(Employee::getUpdateTime);
+
+        employeeService.page(pageInfo, lambdaQueryWrapper);
+        return R.success(pageInfo);
+    }
+
+    /**
+     * 根据id修改员工信息
+     *
+     * @param employee 员工
+     * @return
+     */
+    @PutMapping
+    public R<String> update(HttpServletRequest request, @RequestBody Employee employee) {
+        log.info(employee.toString());
+        employeeService.updateById(employee);
+        return R.success("success");
+    }
+
+    /**
+     * 根据id查员工
+     *
+     * @param id
+     * @return
+     */
+    @GetMapping("/{id}")
+    public R<Employee> getById(@PathVariable Long id) {
+        log.info("id==>" + id.toString());
+        Employee employee = employeeService.getById(id);
+        if (null == employee) return R.error("未查询到");
+        return R.success(employee);
     }
 
 }

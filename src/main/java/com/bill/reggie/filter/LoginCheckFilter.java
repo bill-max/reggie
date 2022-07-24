@@ -1,6 +1,7 @@
 package com.bill.reggie.filter;
 
 import com.alibaba.fastjson.JSON;
+import com.bill.reggie.common.BaseContext;
 import com.bill.reggie.common.R;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.web.servlet.ServletComponentScan;
@@ -15,11 +16,15 @@ import java.io.IOException;
 
 /**
  * 检查用户是否登录
+ * @author 李建彤
  */
 @Slf4j
 @WebFilter(filterName = "loginCheckFilter", urlPatterns = "/*")
 public class LoginCheckFilter implements Filter {
     //路径匹配
+    /**
+     * 匹配器
+     */
     public static final AntPathMatcher PATH_MATCHER = new AntPathMatcher();
 
     @Override
@@ -38,6 +43,11 @@ public class LoginCheckFilter implements Filter {
         Object employee = request.getSession().getAttribute("employee");
         //判断是否放行==> 满足放行url  || 已登录
         if (check(urls, uri) || request.getSession().getAttribute("employee") != null) {
+
+            Long employeeId = (Long) request.getSession().getAttribute("employee");
+            if (null != employeeId) {
+                BaseContext.setCurrentId(employeeId);
+            }
             filterChain.doFilter(request, response);
 //            log.info("放行url:" + uri);
 //            log.info((String) employee);
@@ -56,7 +66,7 @@ public class LoginCheckFilter implements Filter {
      */
     public boolean check(String[] urls, String requestURI) {
         for (String url : urls) {
-            if(PATH_MATCHER.match(url, requestURI))
+            if (PATH_MATCHER.match(url, requestURI))
                 return true;
         }
         return false;
