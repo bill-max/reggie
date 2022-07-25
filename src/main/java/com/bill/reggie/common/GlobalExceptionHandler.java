@@ -19,16 +19,26 @@ import java.sql.SQLIntegrityConstraintViolationException;
 public class GlobalExceptionHandler {
     /**
      * sql异常处理
+     *
      * @return
      */
     @ExceptionHandler(SQLIntegrityConstraintViolationException.class)
     public R<String> exceptionHandler(SQLIntegrityConstraintViolationException ex) {
-//        log.info("===========do============");
         if (ex.getMessage().contains("Duplicate entry")) {
             String[] split = ex.getMessage().split(" ");
-            String msg = "账号："+split[2] + "已存在,请重新输入";
+            String msg = split[2] + "已存在,请重新输入";
             return R.error(msg);
         }
         return R.error("未知异常");
+    }
+
+    /**
+     * custom异常处理
+     *
+     * @return
+     */
+    @ExceptionHandler(CustomException.class)
+    public R<String> exceptionHandler(CustomException ex) {
+        return R.error(ex.getMessage());
     }
 }

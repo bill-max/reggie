@@ -22,3 +22,5 @@ mybatis-plus:
     db-config:
       id-type: ASSIGN_ID
 
+reggie:
+  path: E:\图片资源\

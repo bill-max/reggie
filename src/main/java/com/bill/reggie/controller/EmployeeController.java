@@ -83,13 +83,13 @@ public class EmployeeController {
         //设置默认密码
         employee.setPassword(DigestUtils.md5DigestAsHex("123456".getBytes()));
         //设置默认属性
-        employee.setCreateTime(LocalDateTime.now());
-        employee.setUpdateTime(LocalDateTime.now());
+//        employee.setCreateTime(LocalDateTime.now());
+//        employee.setUpdateTime(LocalDateTime.now());
 
         //获得用户id
-        Long id = (Long) request.getSession().getAttribute("employee");
-        employee.setCreateUser(id);
-        employee.setUpdateUser(id);
+//        Long id = (Long) request.getSession().getAttribute("employee");
+//        employee.setCreateUser(id);
+//        employee.setUpdateUser(id);
 
         employeeService.save(employee);
 
@@ -125,7 +125,7 @@ public class EmployeeController {
      * @return
      */
     @PutMapping
-    public R<String> update(HttpServletRequest request, @RequestBody Employee employee) {
+    public R<String> update(@RequestBody Employee employee) {
         log.info(employee.toString());
         employeeService.updateById(employee);
         return R.success("success");
@@ -141,7 +141,9 @@ public class EmployeeController {
     public R<Employee> getById(@PathVariable Long id) {
         log.info("id==>" + id.toString());
         Employee employee = employeeService.getById(id);
-        if (null == employee) return R.error("未查询到");
+        if (null == employee) {
+            return R.error("未查询到");
+        }
         return R.success(employee);
     }
 
