@@ -1,6 +1,7 @@
 package com.bill.reggie.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bill.reggie.dto.DishDto;
 import com.bill.reggie.entity.Dish;
@@ -72,5 +73,16 @@ public class DishServiceImpl extends ServiceImpl<DishMapper, Dish> implements Di
         }).collect(Collectors.toList());
 
         dishFlavorService.saveBatch(flavors);
+    }
+
+    /**
+     * 逻辑删除
+     * @param id id
+     */
+    @Override
+    public void removeById(Long id) {
+        LambdaUpdateWrapper<Dish> lambdaUpdateWrapper = new LambdaUpdateWrapper<>();
+        lambdaUpdateWrapper.set(Dish::getIsDeleted, 1).eq(Dish::getId, id);
+        this.update(lambdaUpdateWrapper);
     }
 }

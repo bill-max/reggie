@@ -1,11 +1,13 @@
 package com.bill.reggie.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.bill.reggie.common.R;
 import com.bill.reggie.dto.DishDto;
 import com.bill.reggie.entity.Category;
 import com.bill.reggie.entity.Dish;
+import com.bill.reggie.entity.DishFlavor;
 import com.bill.reggie.service.CategoryService;
 import com.bill.reggie.service.DishFlavorService;
 import com.bill.reggie.service.DishService;
@@ -14,9 +16,12 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.awt.datatransfer.DataFlavor;
 import java.util.List;
 import java.util.stream.Collectors;
 
+
+// todo logical delete
 @RestController
 @RequestMapping("/dish")
 @Slf4j
@@ -53,7 +58,7 @@ public class DishController {
     public R<Page<DishDto>> page(int page, int pageSize, String name) {
         Page<Dish> dishPage = new Page<>(page, pageSize);
         LambdaQueryWrapper<Dish> lambdaQueryWrapper = new LambdaQueryWrapper<>();
-        lambdaQueryWrapper.like(name != null, Dish::getName, name);
+        lambdaQueryWrapper.like(name != null, Dish::getName, name).eq(Dish::getIsDeleted, 0);
         lambdaQueryWrapper.orderByAsc(Dish::getPrice);
         dishService.page(dishPage, lambdaQueryWrapper);
 
@@ -73,6 +78,13 @@ public class DishController {
                 String categoryName = category.getName();
                 dishDto.setCategoryName(categoryName);
             }
+            //查口味
+            Long dishId = item.getId();
+            LambdaQueryWrapper<DishFlavor> dishFlavorLambdaQueryWrapper = new LambdaQueryWrapper<>();
+            dishFlavorLambdaQueryWrapper.eq(DishFlavor::getDishId, dishId);
+            List<DishFlavor> dishFlavors = dishFlavorService.list(dishFlavorLambdaQueryWrapper);
+
+            dishDto.setFlavors(dishFlavors);
 
             return dishDto;
         }).collect(Collectors.toList());
@@ -121,5 +133,26 @@ public class DishController {
         lambdaQueryWrapper.orderByAsc(Dish::getSort).orderByDesc(Dish::getUpdateTime);
         List<Dish> dishes = dishService.list(lambdaQueryWrapper);
         return R.success(dishes);
+    }
+
+    /**
+     * 设置状态
+     * @param status
+     * @param ids
+     * @return
+     */
+    @PostMapping("/status/{status}")
+    public R<String> setStatus(@PathVariable int status, Long ids) {
+        log.info("status==" + status + "ids==" + ids);
+        LambdaUpdateWrapper<Dish> lambdaUpdateWrapper = new LambdaUpdateWrapper<>();
+        lambdaUpdateWrapper.set(Dish::getStatus, status).eq(Dish::getId, ids);
+        dishService.update(lambdaUpdateWrapper);
+        return R.success("success");
+    }
+
+    @DeleteMapping
+    public R<String> delete(Long ids) {
+        dishService.removeById(ids);
+        return R.success("success");
     }
 }

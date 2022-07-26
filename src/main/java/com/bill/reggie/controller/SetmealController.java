@@ -10,18 +10,17 @@ import com.bill.reggie.entity.Dish;
 import com.bill.reggie.entity.Setmeal;
 import com.bill.reggie.service.CategoryService;
 import com.bill.reggie.service.SetmealService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/setmeal")
+@Slf4j
 public class SetmealController {
     @Autowired
     private SetmealService setmealService;
@@ -40,7 +39,7 @@ public class SetmealController {
     public R<Page<SetmealDto>> page(int page, int pageSize, String name) {
         Page<Setmeal> setmealPage = new Page<>(page, pageSize);
         LambdaQueryWrapper<Setmeal> lambdaQueryWrapper = new LambdaQueryWrapper<>();
-        lambdaQueryWrapper.like(name != null, Setmeal::getName, name);
+        lambdaQueryWrapper.like(name != null, Setmeal::getName, name).eq(Setmeal::getIsDeleted, 0);
         lambdaQueryWrapper.orderByAsc(Setmeal::getPrice);
         setmealService.page(setmealPage, lambdaQueryWrapper);
 
@@ -68,7 +67,30 @@ public class SetmealController {
         return R.success(SetmealDtoPage);
     }
 
-    // TODO 新增菜品套餐
+    /**
+     * 菜品套餐保存
+     *
+     * @param setmealDto
+     * @return
+     */
+    @PostMapping
+    public R<String> save(@RequestBody SetmealDto setmealDto) {
+        setmealService.saveWithDish(setmealDto);
+        return R.success("success");
+    }
+
+    /**
+     * 删除套餐    一个
+     *
+     * @param ids
+     * @return
+     */
+    @DeleteMapping
+    public R<String> delete(@RequestParam List<Long> ids) {
+        log.info("ids:{}", ids);
+        setmealService.removeWithDish(ids);
+        return R.success("success");
+    }
 
 
 }
