@@ -124,7 +124,7 @@ public class DishController {
      * @return
      */
     @GetMapping("/list")
-    public R<List<Dish>> list(Dish dish) {
+    public R<List<DishDto>> list(Dish dish) {
 //        log.info("id==>"+categoryId);
         LambdaQueryWrapper<Dish> lambdaQueryWrapper = new LambdaQueryWrapper<>();
         lambdaQueryWrapper.eq(dish.getCategoryId() != null, Dish::getCategoryId, dish.getCategoryId());
@@ -132,7 +132,30 @@ public class DishController {
         lambdaQueryWrapper.eq(Dish::getStatus, 1);
         lambdaQueryWrapper.orderByAsc(Dish::getSort).orderByDesc(Dish::getUpdateTime);
         List<Dish> dishes = dishService.list(lambdaQueryWrapper);
-        return R.success(dishes);
+
+        List<DishDto> list = dishes.stream().map((item) -> {
+            Long categoryId = item.getCategoryId();
+            Category category = categoryService.getById(categoryId);
+
+            DishDto dishDto = new DishDto();
+            BeanUtils.copyProperties(item, dishDto);
+
+            if (category != null) {
+                String categoryName = category.getName();
+                dishDto.setCategoryName(categoryName);
+            }
+            //查口味
+            Long dishId = item.getId();
+            LambdaQueryWrapper<DishFlavor> dishFlavorLambdaQueryWrapper = new LambdaQueryWrapper<>();
+            dishFlavorLambdaQueryWrapper.eq(DishFlavor::getDishId, dishId);
+            List<DishFlavor> dishFlavors = dishFlavorService.list(dishFlavorLambdaQueryWrapper);
+
+            dishDto.setFlavors(dishFlavors);
+
+            return dishDto;
+        }).collect(Collectors.toList());
+
+        return R.success(list);
     }
 
     /**

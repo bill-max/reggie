@@ -8,7 +8,9 @@ import com.bill.reggie.dto.SetmealDto;
 import com.bill.reggie.entity.Category;
 import com.bill.reggie.entity.Dish;
 import com.bill.reggie.entity.Setmeal;
+import com.bill.reggie.entity.SetmealDish;
 import com.bill.reggie.service.CategoryService;
+import com.bill.reggie.service.SetmealDishService;
 import com.bill.reggie.service.SetmealService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -27,6 +29,9 @@ public class SetmealController {
 
     @Autowired
     private CategoryService categoryService;
+
+    @Autowired
+    private SetmealDishService setmealDishService;
 
     /**
      * 分页查询
@@ -92,5 +97,34 @@ public class SetmealController {
         return R.success("success");
     }
 
+    /**
+     * 套餐分类查询
+     *
+     * @param setmeal
+     * @return
+     */
+    @GetMapping("/list")
+    public R<List<SetmealDto>> list(Setmeal setmeal) {
+//        log.info("setmeal" + setmeal.toString());
+        LambdaQueryWrapper<Setmeal> setmealLambdaQueryWrapper = new LambdaQueryWrapper<>();
+        setmealLambdaQueryWrapper.in(setmeal.getCategoryId() != null, Setmeal::getCategoryId, setmeal.getCategoryId())
+                .eq(Setmeal::getStatus, 1)
+                .orderByDesc(Setmeal::getUpdateTime);
+        List<Setmeal> setmeals = setmealService.list(setmealLambdaQueryWrapper);
 
+        List<SetmealDto> setmealDtoList = setmeals.stream().map((item) -> {
+            SetmealDto setmealDto = new SetmealDto();
+            BeanUtils.copyProperties(item, setmealDto);
+
+            Long setmealId = item.getId();
+            LambdaQueryWrapper<SetmealDish> setmealDishLambdaQueryWrapper = new LambdaQueryWrapper<>();
+            setmealDishLambdaQueryWrapper.eq(SetmealDish::getSetmealId, setmealId);
+            List<SetmealDish> setmealDishes = setmealDishService.list(setmealDishLambdaQueryWrapper);
+
+            setmealDto.setSetmealDishes(setmealDishes);
+            return setmealDto;
+        }).collect(Collectors.toList());
+
+        return R.success(setmealDtoList);
+    }
 }

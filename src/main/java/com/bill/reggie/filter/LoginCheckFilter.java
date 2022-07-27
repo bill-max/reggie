@@ -4,7 +4,6 @@ import com.alibaba.fastjson.JSON;
 import com.bill.reggie.common.BaseContext;
 import com.bill.reggie.common.R;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.web.servlet.ServletComponentScan;
 import org.springframework.util.AntPathMatcher;
 
 import javax.servlet.*;
@@ -13,61 +12,85 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
-
 /**
- * 检查用户是否登录
- * @author 李建彤
+ * 检查用户是否已经完成登录
  */
+@WebFilter(filterName = "loginCheckFilter",urlPatterns = "/*")
 @Slf4j
-@WebFilter(filterName = "loginCheckFilter", urlPatterns = "/*")
-public class LoginCheckFilter implements Filter {
-    //路径匹配
-    /**
-     * 匹配器
-     */
+public class LoginCheckFilter implements Filter{
+    //路径匹配器，支持通配符
     public static final AntPathMatcher PATH_MATCHER = new AntPathMatcher();
 
     @Override
     public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
         HttpServletRequest request = (HttpServletRequest) servletRequest;
         HttpServletResponse response = (HttpServletResponse) servletResponse;
-        //获取uri
-        String uri = request.getRequestURI();
-        //放行url
+
+        //1、获取本次请求的URI
+        String requestURI = request.getRequestURI();// /backend/index.html
+
+        log.info("拦截到请求：{}",requestURI);
+
+        //定义不需要处理的请求路径
         String[] urls = new String[]{
                 "/employee/login",
                 "/employee/logout",
                 "/backend/**",
-                "/front/**"
+                "/front/**",
+                "/common/**",
+                "/user/sendMsg",
+                "/user/login"
         };
-        Object employee = request.getSession().getAttribute("employee");
-        //判断是否放行==> 满足放行url  || 已登录
-        if (check(urls, uri) || request.getSession().getAttribute("employee") != null) {
 
-            Long employeeId = (Long) request.getSession().getAttribute("employee");
-            if (null != employeeId) {
-                BaseContext.setCurrentId(employeeId);
-            }
-            filterChain.doFilter(request, response);
-//            log.info("放行url:" + uri);
-//            log.info((String) employee);
-        } else {
-            //未登录时，前端跳转到登录界面，后端回写数据
-            response.getWriter().write(JSON.toJSONString(R.error("NOTLOGIN")));
-//            log.info("filter url :" + uri);
-//            log.info((String) employee);
+        //2、判断本次请求是否需要处理
+        boolean check = check(urls, requestURI);
+
+        //3、如果不需要处理，则直接放行
+        if(check){
+            log.info("本次请求{}不需要处理",requestURI);
+            filterChain.doFilter(request,response);
+            return;
         }
+
+        //4-1、判断登录状态，如果已登录，则直接放行
+        if(request.getSession().getAttribute("employee") != null){
+            log.info("用户已登录，用户id为：{}",request.getSession().getAttribute("employee"));
+
+            Long empId = (Long) request.getSession().getAttribute("employee");
+            BaseContext.setCurrentId(empId);
+
+            filterChain.doFilter(request,response);
+            return;
+        }
+
+        //4-2、判断登录状态，如果已登录，则直接放行
+        if(request.getSession().getAttribute("user") != null){
+            log.info("用户已登录，用户id为：{}",request.getSession().getAttribute("user"));
+
+            Long userId = (Long) request.getSession().getAttribute("user");
+            BaseContext.setCurrentId(userId);
+
+            filterChain.doFilter(request,response);
+            return;
+        }
+
+        log.info("用户未登录");
+        //5、如果未登录则返回未登录结果，通过输出流方式向客户端页面响应数据
+        response.getWriter().write(JSON.toJSONString(R.error("NOTLOGIN")));
     }
 
     /**
-     * 判断是否放行
-     *
+     * 路径匹配，检查本次请求是否需要放行
+     * @param urls
+     * @param requestURI
      * @return
      */
-    public boolean check(String[] urls, String requestURI) {
+    public boolean check(String[] urls,String requestURI){
         for (String url : urls) {
-            if (PATH_MATCHER.match(url, requestURI))
+            boolean match = PATH_MATCHER.match(url, requestURI);
+            if(match){
                 return true;
+            }
         }
         return false;
     }
