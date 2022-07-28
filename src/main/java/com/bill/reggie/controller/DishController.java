@@ -160,6 +160,7 @@ public class DishController {
 
     /**
      * 设置状态
+     *
      * @param status
      * @param ids
      * @return
@@ -173,9 +174,16 @@ public class DishController {
         return R.success("success");
     }
 
+    /**
+     * 删除菜品， 包括单个和批量
+     *
+     * @param ids
+     * @return
+     */
     @DeleteMapping
-    public R<String> delete(Long ids) {
-        dishService.removeById(ids);
+    public R<String> delete(@RequestParam List<Long> ids) {
+        log.info("ids:{}", ids);
+        dishService.removeByIds(ids);
         return R.success("success");
     }
 }

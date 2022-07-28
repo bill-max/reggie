@@ -53,7 +53,6 @@ public class UserController {
         return R.error("短信发送失败");
     }
 
-    //todo 修改登录功能  保证能登录成功
 
     /**
      * 移动端用户登录

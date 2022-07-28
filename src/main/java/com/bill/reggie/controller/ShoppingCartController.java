@@ -85,6 +85,7 @@ public class ShoppingCartController {
     public R<String> sub(@RequestBody ShoppingCart shoppingCart) {
         Long dishId = shoppingCart.getDishId();
         LambdaQueryWrapper<ShoppingCart> lambdaQueryWrapper = new LambdaQueryWrapper<>();
+        lambdaQueryWrapper.eq(ShoppingCart::getUserId, BaseContext.getCurrentId());
         if (dishId != null)
             lambdaQueryWrapper.eq(ShoppingCart::getDishId, dishId);
         else
@@ -100,5 +101,18 @@ public class ShoppingCartController {
             shoppingCartService.updateById(one);
             return R.success("success");
         }
+    }
+
+    /**
+     * 清空购物车
+     * @return
+     */
+    @DeleteMapping("/clean")
+    public R<String> clean() {
+        Long userId = BaseContext.getCurrentId();
+        LambdaQueryWrapper<ShoppingCart> lambdaQueryWrapper = new LambdaQueryWrapper<>();
+        lambdaQueryWrapper.eq(ShoppingCart::getUserId, userId);
+        shoppingCartService.remove(lambdaQueryWrapper);
+        return R.success("success");
     }
 }
