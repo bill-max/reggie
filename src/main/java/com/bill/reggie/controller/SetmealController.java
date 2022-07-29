@@ -1,6 +1,7 @@
 package com.bill.reggie.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.bill.reggie.common.R;
 import com.bill.reggie.dto.DishDto;
@@ -32,6 +33,19 @@ public class SetmealController {
 
     @Autowired
     private SetmealDishService setmealDishService;
+
+    /**
+     * 根据id查套餐
+     *
+     * @param id
+     * @return
+     */
+    @GetMapping("/{id}")
+    public R<SetmealDto> get(@PathVariable Long id) {
+        SetmealDto setmealDto = setmealService.getByIdWithDish(id);
+        return R.success(setmealDto);
+    }
+
 
     /**
      * 分页查询
@@ -70,6 +84,18 @@ public class SetmealController {
 
         SetmealDtoPage.setRecords(list);
         return R.success(SetmealDtoPage);
+    }
+
+    /**
+     * 修改
+     *
+     * @param setmealDto
+     * @return
+     */
+    @PutMapping
+    public R<String> update(@RequestBody SetmealDto setmealDto) {
+        setmealService.updateWithDish(setmealDto);
+        return R.success("success");
     }
 
     /**
@@ -126,5 +152,21 @@ public class SetmealController {
         }).collect(Collectors.toList());
 
         return R.success(setmealDtoList);
+    }
+
+    /**
+     * 设置状态  包括批量功能
+     * @param status
+     * @param ids
+     * @return
+     */
+    @PostMapping("/status/{status}")
+    public R<String> setStatus(@PathVariable int status, @RequestParam List<Long> ids) {
+        log.info("ids:{}", ids);
+        log.info("status==" + status );
+        LambdaUpdateWrapper<Setmeal> lambdaUpdateWrapper = new LambdaUpdateWrapper<>();
+        lambdaUpdateWrapper.set(Setmeal::getStatus, status).in(Setmeal::getId, ids);
+        setmealService.update(lambdaUpdateWrapper);
+        return R.success("success");
     }
 }

@@ -159,17 +159,19 @@ public class DishController {
     }
 
     /**
-     * 设置状态
+     * 设置状态  包含批量功能
+     *
      *
      * @param status
      * @param ids
      * @return
      */
     @PostMapping("/status/{status}")
-    public R<String> setStatus(@PathVariable int status, Long ids) {
-        log.info("status==" + status + "ids==" + ids);
+    public R<String> setStatus(@PathVariable int status, @RequestParam List<Long> ids) {
+        log.info("ids:{}", ids);
+        log.info("status==" + status );
         LambdaUpdateWrapper<Dish> lambdaUpdateWrapper = new LambdaUpdateWrapper<>();
-        lambdaUpdateWrapper.set(Dish::getStatus, status).eq(Dish::getId, ids);
+        lambdaUpdateWrapper.set(Dish::getStatus, status).in(Dish::getId, ids);
         dishService.update(lambdaUpdateWrapper);
         return R.success("success");
     }

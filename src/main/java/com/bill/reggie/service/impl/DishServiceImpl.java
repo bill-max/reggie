@@ -67,6 +67,7 @@ public class DishServiceImpl extends ServiceImpl<DishMapper, Dish> implements Di
         //更改数据
         List<DishFlavor> flavors = dishDto.getFlavors();
         Long dishId = dishDto.getId();
+
         flavors.stream().map((item) -> {
             item.setDishId(dishId);
             return item;
