@@ -37,7 +37,6 @@ public class EmployeeController {
         // 没有返回失败
         // 判断密码是否正确
         // 判断员工状态   状态锁定返回失败
-
         //1 对页面提交的密码进行加密处理
         String password = DigestUtils.md5DigestAsHex(employee.getPassword().getBytes());
         //2. 查数据库
