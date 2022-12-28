@@ -53,6 +53,8 @@ public class EmployeeController {
         if (one.getStatus() == 0) {
             return R.error("登录失败，员工状态已锁定");
         }
+
+
         // 登录成功，将员工id存入session 并返回登录成功结果
         request.getSession().setAttribute("employee", one.getId());
         return R.success(one);
