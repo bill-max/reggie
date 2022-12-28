@@ -31,6 +31,8 @@ public class TransactionTest {
     public void save() {
         User user = new User();
         user.setId(1L);
+        user.setName("hx2");
+        user.setName("12");
         user.setName("00");
         userMapper.updateById(user);
 
