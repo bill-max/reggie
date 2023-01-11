@@ -1,0 +1,39 @@
+package com.bill.reggie.threadPool;
+
+import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class LoopTask {
+    private List<ChildTask> childTasks;
+
+    public void initLoopTask() {
+        childTasks = new ArrayList();
+        childTasks.add(new ChildTask("Task1"));
+        childTasks.add(new ChildTask("Task2"));
+        for (final ChildTask childTask : childTasks) {
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    childTask.doExecute();
+                }
+            }).start();
+        }
+    }
+
+    public void shutdownLoopTask() {
+        if (!CollectionUtils.isEmpty(childTasks)) {
+            for (ChildTask childTask : childTasks) {
+                childTask.terminal();
+            }
+        }
+    }
+
+    public static void main(String args[]) throws Exception {
+        LoopTask loopTask = new LoopTask();
+        loopTask.initLoopTask();
+//        Thread.sleep(5000L);
+        loopTask.shutdownLoopTask();
+    }
+}
